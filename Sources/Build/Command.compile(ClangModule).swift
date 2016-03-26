@@ -86,6 +86,10 @@ extension Command {
             args += ["-MD", "-MT", "dependencies", "-MF", path.deps]
             args += ["-c", path.source, "-o", path.object]
 
+			#if os(OSX)
+				args += ["-target", "x86_64-apple-macosx10.10"]
+			#endif
+
             let clang = ClangTool(desc: "Compile \(module.name) \(path.filename)",
                                   inputs: dependencies + [path.source],
                                   outputs: [path.object],

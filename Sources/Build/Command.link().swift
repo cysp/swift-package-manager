@@ -22,9 +22,31 @@ extension Command {
         let objects: [String]
         switch conf {
         case .Release:
-            objects = product.buildables.map{ Path.join(prefix, "\($0.c99name).o") }
+            objects = product.buildables.flatMap{ (module: Module) -> [String] in
+                switch module {
+                case is SwiftModule, is ClangModule:
+                    return [Path.join(prefix, "\(module.c99name).o")]
+                case is CModule:
+                    break
+                case _:
+                    fatalError("unexpected Module type: \(module.dynamicType)")
+                }
+                return []
+            }
         case .Debug:
-            objects = product.buildables.flatMap{ return SwiftcTool(module: $0, prefix: prefix, otherArgs: []).objects }
+            objects = product.buildables.flatMap{ (module: Module) -> [String] in
+                switch module {
+                case let module as SwiftModule:
+                    return SwiftcTool(module: module, prefix: prefix, otherArgs: []).objects
+                case let module as ClangModule:
+                    return [Path.join(prefix, "\(module.c99name).o")]
+                case is CModule:
+                    break
+                case _:
+                    fatalError("unexpected Module type: \(module.dynamicType)")
+                }
+                return []
+            }
         }
 
         let outpath = Path.join(prefix, product.outname)
@@ -118,7 +140,7 @@ extension Command {
 }
 
 extension Product {
-    private var buildables: [SwiftModule] {
-        return recursiveDependencies(modules.map{$0}).flatMap{ $0 as? SwiftModule }
+    private var buildables: [Module] {
+        return recursiveDependencies(modules.map{$0}).flatMap{ $0 }
     }
 }

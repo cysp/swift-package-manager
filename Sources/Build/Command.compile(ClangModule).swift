@@ -62,6 +62,9 @@ extension Command {
         }
         
         args += ["-o", productPath]
+        #if os(OSX)
+            args += ["-target", "x86_64-apple-macosx10.10"]
+        #endif
 
         let clang = ShellTool(
             description: "Compiling \(module.name)",

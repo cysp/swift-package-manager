@@ -20,7 +20,21 @@ import PkgConfig
 extension Command {
     static func link(_ product: Product, configuration conf: Configuration, prefix: String, otherArgs: [String], SWIFT_EXEC: String) throws -> Command {
 
-        let objects = product.buildables.flatMap { SwiftcTool(module: $0, prefix: prefix, otherArgs: [], executable: SWIFT_EXEC, conf: conf).objects }
+        let objects = product.buildables.flatMap{ (module: Module) -> [String] in
+                switch module {
+                case let module as SwiftModule:
+                    return SwiftcTool(module: $0, prefix: prefix, otherArgs: [], executable: SWIFT_EXEC, conf: conf).objects
+                case let module as ClangModule:
+                    let wd = Path.join(prefix, "\(module.c99name).build")
+                    return [Path.join(wd, "\(module.c99name).o")]
+                case is CModule:
+                    break
+                case _:
+                    fatalError("unexpected Module type: \(module.dynamicType)")
+                }
+                return []
+            }
+        }
 
         let outpath = Path.join(prefix, product.outname)
 
@@ -102,7 +116,7 @@ extension Command {
 }
 
 extension Product {
-    private var buildables: [SwiftModule] {
-        return recursiveDependencies(modules.map{$0}).flatMap{ $0 as? SwiftModule }
+    private var buildables: [Module] {
+        return recursiveDependencies(modules).flatMap{ $0 }
     }
 }

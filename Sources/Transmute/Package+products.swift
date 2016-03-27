@@ -43,17 +43,22 @@ extension Package {
     ////// add products from the manifest
 
         for p in manifest.products {
-            let modules: [SwiftModule] = p.modules.flatMap{ moduleName in
-                guard case let picked as SwiftModule = (modules.pick{ $0.name == moduleName }) else {
+            //FIXME no bang
+            let modules = p.modules.map{ (moduleName: String) -> Module in
+                switch modules.pick({ $0.name == moduleName }) {
+                case let module as SwiftModule:
+                    return module
+                case let module as ClangModule:
+                    return module
+                case let module:
                     print("warning: No module \(moduleName) found for product \(p.name)")
                     return nil
                 }
-                return picked
             }
 
             guard !modules.isEmpty else {
                 throw Product.Error.NoModules(p.name)
-            }
+			}
 
             let product = Product(name: p.name, type: p.type, modules: modules)
             products.append(product)

@@ -38,8 +38,15 @@ extension Package {
 
         for p in manifest.products {
             //FIXME no bang
-            let modules = p.modules.map{ moduleName in
-                modules.pick{ $0.name == moduleName } as! SwiftModule
+            let modules = p.modules.map{ (moduleName: String) -> Module in
+                switch modules.pick({ $0.name == moduleName }) {
+                case let module as SwiftModule:
+                    return module
+                case let module as ClangModule:
+                    return module
+                case let module:
+                    fatalError("unexpected module type: \(module)")
+                }
             }
             let product = Product(name: p.name, type: p.type, modules: modules)
             products.append(product)

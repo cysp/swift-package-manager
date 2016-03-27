@@ -13,9 +13,9 @@
 public class Product {
     public let name: String
     public let type: ProductType
-    public let modules: [SwiftModule]
+    public let modules: [Module]
 
-    public init(name: String, type: ProductType, modules: [SwiftModule]) {
+    public init(name: String, type: ProductType, modules: [Module]) {
         self.name = name
         self.type = type
         self.modules = modules

@@ -21,7 +21,13 @@ extension Command {
         let mkdir = Command.createDirectory(wd)
 
         let inputs = module.dependencies.map{ $0.targetName } + module.sources.paths + [mkdir.node]
-        let productPath = Path.join(prefix, module.type == .Library ? "lib\(module.c99name).so" : module.c99name)
+        let productPath: String
+        switch module.type {
+        case .Library:
+            productPath = Path.join(wd, "\(module.c99name).o")
+        case .Executable:
+            productPath = Path.join(prefix, module.c99name)
+        }
 
         var args: [String] = []
     #if os(Linux)
@@ -58,7 +64,7 @@ extension Command {
         args += module.sources.paths
         
         if module.type == .Library {
-            args += ["-shared"]
+            args += ["-c"]
         }
         
         args += ["-o", productPath]

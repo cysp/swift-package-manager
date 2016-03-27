@@ -22,9 +22,35 @@ extension Command {
         let objects: [String]
         switch conf {
         case .Release:
-            objects = product.buildables.map{ Path.join(prefix, "\($0.c99name).o") }
+            objects = product.buildables.flatMap{ (module: Module) -> [String] in
+                switch module {
+                case is SwiftModule:
+                    return [Path.join(prefix, "\(module.c99name).o")]
+                case is ClangModule:
+                    let wd = Path.join(prefix, "\(module.c99name).build")
+                    return [Path.join(wd, "\(module.c99name).o")]
+                case is CModule:
+                    break
+                case _:
+                    fatalError("unexpected Module type: \(module.dynamicType)")
+                }
+                return []
+            }
         case .Debug:
-            objects = product.buildables.flatMap{ return SwiftcTool(module: $0, prefix: prefix, otherArgs: []).objects }
+            objects = product.buildables.flatMap{ (module: Module) -> [String] in
+                switch module {
+                case let module as SwiftModule:
+                    return SwiftcTool(module: module, prefix: prefix, otherArgs: []).objects
+                case let module as ClangModule:
+                    let wd = Path.join(prefix, "\(module.c99name).build")
+                    return [Path.join(wd, "\(module.c99name).o")]
+                case is CModule:
+                    break
+                case _:
+                    fatalError("unexpected Module type: \(module.dynamicType)")
+                }
+                return []
+            }
         }
 
         let outpath = Path.join(prefix, product.outname)
@@ -50,9 +76,16 @@ extension Command {
         let inputs = product.modules.flatMap { module -> [String] in
             switch conf {
             case .Debug:
-                let tool = SwiftcTool(module: module, prefix: prefix, otherArgs: [])
-                // must return tool’s outputs and inputs as shell nodes don't calculate more than that
-                return tool.inputs + tool.outputs
+                switch module {
+                case let module as SwiftModule:
+                    let tool = SwiftcTool(module: module, prefix: prefix, otherArgs: [])
+                    // must return tool’s outputs and inputs as shell nodes don't calculate more than that
+                    return tool.inputs + tool.outputs
+                case is ClangModule:
+                    return objects
+                case _:
+                    fatalError("unexpected module type: \(module)")
+                }
             case .Release:
                 return objects
             }
@@ -118,7 +151,7 @@ extension Command {
 }
 
 extension Product {
-    private var buildables: [SwiftModule] {
-        return recursiveDependencies(modules.map{$0}).flatMap{ $0 as? SwiftModule }
+    private var buildables: [Module] {
+        return recursiveDependencies(modules).flatMap{ $0 }
     }
 }

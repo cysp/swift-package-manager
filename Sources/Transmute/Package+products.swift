@@ -22,10 +22,30 @@ extension Package {
 
     ////// first auto-determine executables
 
-        for case let module as SwiftModule in modules {
-            if module.type == .Executable {
-                let product = Product(name: module.name, type: .Executable, modules: [module])
-                products.append(product)
+        for module in modules {
+            switch module {
+            case let module as SwiftModule:
+                switch module.type {
+                case .Library:
+                    break
+                case .Executable:
+                    let product = Product(name: module.name, type: .Executable, modules: [module])
+                    products.append(product)
+            }
+            case let module as ClangModule:
+                switch module.type {
+                case .Library:
+                    let product = Product(name: module.name, type: .Library(.Dynamic), modules: [module])
+                    products.append(product)
+                    break
+                case .Executable:
+                    let product = Product(name: module.name, type: .Executable, modules: [module])
+                    products.append(product)
+                }
+            case is CModule:
+                break;
+            case _:
+                fatalError()
             }
         }
 

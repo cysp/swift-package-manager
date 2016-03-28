@@ -16,26 +16,32 @@ import func POSIX.mkdir
 import func POSIX.popen
 import XCTest
 
+#if os(OSX)
+let dylibExtension = "dylib"
+#else
+let dylibExtension = "so"
+#endif
+
 class TestClangModulesTestCase: XCTestCase {
     
     func testSingleModuleFlatCLibrary() {
         fixture(name: "ClangModules/CLibraryFlat") { prefix in
             XCTAssertBuilds(prefix)
-            XCTAssertFileExists(prefix, ".build", "debug", "libCLibraryFlat.so")
+            XCTAssertFileExists(prefix, ".build", "debug", "libCLibraryFlat."+dylibExtension)
         }
     }
     
     func testSingleModuleCLibraryInSources() {
         fixture(name: "ClangModules/CLibrarySources") { prefix in
             XCTAssertBuilds(prefix)
-            XCTAssertFileExists(prefix, ".build", "debug", "libCLibrarySources.so")
+            XCTAssertFileExists(prefix, ".build", "debug", "libCLibrarySources."+dylibExtension)
         }
     }
     
     func testMixedSwiftAndC() {
         fixture(name: "ClangModules/SwiftCMixed") { prefix in
             XCTAssertBuilds(prefix)
-            XCTAssertFileExists(prefix, ".build", "debug", "libSeaLib.so")
+            XCTAssertFileExists(prefix, ".build", "debug", "libSeaLib.\(dylibExtension)")
             let exec = ".build/debug/SeaExec"
             XCTAssertFileExists(prefix, exec)
             let output = try popen([Path.join(prefix, exec)])
@@ -47,7 +53,7 @@ class TestClangModulesTestCase: XCTestCase {
         fixture(name: "DependencyResolution/External/SimpleCDep") { prefix in
             XCTAssertBuilds(prefix, "Bar")
             XCTAssertFileExists(prefix, "Bar/.build/debug/Bar")
-            XCTAssertFileExists(prefix, "Bar/.build/debug/libFoo.so")
+            XCTAssertFileExists(prefix, "Bar/.build/debug/libFoo."+dylibExtension)
             XCTAssertDirectoryExists(prefix, "Bar/Packages/Foo-1.2.3")
         }
     }
@@ -55,15 +61,15 @@ class TestClangModulesTestCase: XCTestCase {
     func testiquoteDep() {
         fixture(name: "ClangModules/CLibraryiquote") { prefix in
             XCTAssertBuilds(prefix)
-            XCTAssertFileExists(prefix, ".build", "debug", "libFoo.so")
-            XCTAssertFileExists(prefix, ".build", "debug", "libBar.so")
+            XCTAssertFileExists(prefix, ".build", "debug", "libFoo."+dylibExtension)
+            XCTAssertFileExists(prefix, ".build", "debug", "libBar."+dylibExtension)
         }
     }
     
     func testCUsingCDep() {
         fixture(name: "DependencyResolution/External/CUsingCDep") { prefix in
             XCTAssertBuilds(prefix, "Bar")
-            XCTAssertFileExists(prefix, "Bar/.build/debug/libFoo.so")
+            XCTAssertFileExists(prefix, "Bar/.build/debug/libFoo."+dylibExtension)
             XCTAssertDirectoryExists(prefix, "Bar/Packages/Foo-1.2.3")
         }
     }

@@ -15,7 +15,7 @@ import PkgConfig
 extension Command {
     static func compile(swiftModule module: SwiftModule, configuration conf: Configuration, prefix: String, otherArgs: [String], SWIFT_EXEC: String) throws -> Command {
 
-        let otherArgs = otherArgs + module.XccFlags(prefix) + (try module.pkgConfigSwiftcArgs()) + module.moduleCacheArgs(prefix: prefix) + recursiveDependencies([module]).flatMap({ (module: Module) -> [String] in
+        let otherArgs = otherArgs + module.XccFlags(prefix) + (try module.pkgConfigSwiftcArgs()) + module.moduleCacheArgs(prefix: prefix) /*+ recursiveDependencies([module]).flatMap({ (module: Module) -> [String] in
             switch module {
             case is SwiftModule:
                 return []
@@ -26,7 +26,7 @@ extension Command {
             case _:
                 return []
             }
-        })
+        })*/
         var args = ["-j\(SwiftcTool.numThreads)", "-D", "SWIFT_PACKAGE"]
 
         switch conf {

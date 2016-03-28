@@ -88,6 +88,7 @@ extension Command {
 
 			#if os(OSX)
 				args += ["-target", "x86_64-apple-macosx10.10"]
+				args += ["-isysroot", Toolchain.sysroot!]
 			#endif
 
             let clang = ClangTool(desc: "Compile \(module.name) \(path.filename)",

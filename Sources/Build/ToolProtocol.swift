@@ -60,7 +60,17 @@ struct SwiftcTool: ToolProtocol {
     let otherArgs: [String]
 
     var inputs: [String] {
-        return module.recursiveDependencies.map{ $0.targetName }
+        return module.recursiveDependencies.flatMap{ (module: Module) -> [String] in
+            switch module {
+            case is SwiftModule, is CModule:
+                return [module.targetName]
+            case let module as ClangModule:
+                let wd = Path.join(prefix, "\(module.c99name).build")
+                return [module.targetName, Path.join(wd, "\(module.c99name).o")]
+            case _:
+                fatalError("unexpected Module type: \(module.dynamicType)")
+            }
+        }
     }
 
     var outputs: [String]        { return [module.targetName] + objects }

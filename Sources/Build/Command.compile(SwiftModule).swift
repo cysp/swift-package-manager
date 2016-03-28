@@ -14,7 +14,19 @@ import Utility
 extension Command {
     static func compile(swiftModule module: SwiftModule, configuration conf: Configuration, prefix: String, otherArgs: [String]) throws -> (Command, [Command]) {
 
-        let otherArgs = otherArgs + module.Xcc
+        let otherArgs = otherArgs + module.Xcc + recursiveDependencies([module]).flatMap({ (module: Module) -> [String] in
+            switch module {
+            case is SwiftModule:
+                return []
+            case is ClangModule:
+                return ["-l\(module.c99name)"]
+            case let module as CModule:
+                return []
+            case _:
+                return []
+            }
+        })
+
 
         func cmd(tool: ToolProtocol) -> Command {
             return Command(node: module.targetName, tool: tool)

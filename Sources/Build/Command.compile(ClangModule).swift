@@ -23,10 +23,10 @@ extension Command {
         let inputs = module.dependencies.map{ $0.targetName } + module.sources.paths + [mkdir.node]
         let productPath: String
         switch module.type {
-        case .Library:
+        case .Library, .Executable:
             productPath = Path.join(wd, "\(module.c99name).o")
-        case .Executable:
-            productPath = Path.join(prefix, module.c99name)
+//        case .Executable:
+//            productPath = Path.join(prefix, module.c99name)
         }
 
         var args: [String] = []
@@ -63,13 +63,14 @@ extension Command {
 
         args += module.sources.paths
         
-        if module.type == .Library {
+//        if module.type == .Library {
             args += ["-c"]
-        }
-        
+//        }
+
         args += ["-o", productPath]
         #if os(OSX)
             args += ["-target", "x86_64-apple-macosx10.10"]
+            args += ["-isysroot", Toolchain.sysroot!]
         #endif
 
         let clang = ShellTool(

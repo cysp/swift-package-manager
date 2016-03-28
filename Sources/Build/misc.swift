@@ -20,6 +20,7 @@ func platformArgs() -> [String] {
 
     if let sysroot = Toolchain.sysroot {
         args += ["-sdk", sysroot]
+//        args += ["-isysroot", sysroot]
     }
 #endif
 
